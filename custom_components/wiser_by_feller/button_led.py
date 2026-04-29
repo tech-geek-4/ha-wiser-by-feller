@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from aiowiserbyfeller import Device, Load
-from homeassistant.components.light import ATTR_EFFECT, ATTR_RGB_COLOR, LightEntity
+from homeassistant.components.light import ATTR_EFFECT, ATTR_RGB_COLOR, LightEntity, LightEntityFeature
 from homeassistant.components.light.const import ColorMode
 from homeassistant.helpers.device_registry import DeviceInfo
 
@@ -242,6 +242,7 @@ class WiserButtonLedLightEntity(LightEntity):
     _attr_has_entity_name = False
     _attr_supported_color_modes = {ColorMode.RGB}
     _attr_color_mode = ColorMode.RGB
+    _attr_supported_features = LightEntityFeature.EFFECT
     _attr_effect_list = LED_EFFECTS
 
     def __init__(
