@@ -8,6 +8,7 @@ from aiowiserbyfeller import Device, Load
 from homeassistant.components.light import ATTR_EFFECT, ATTR_RGB_COLOR, LightEntity, LightEntityFeature
 from homeassistant.components.light.const import ColorMode
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import DOMAIN, MANUFACTURER
 from .coordinator import WiserCoordinator
@@ -245,6 +246,7 @@ class WiserButtonLedLightEntity(LightEntity):
     _attr_color_mode = ColorMode.RGB
     _attr_supported_features = LightEntityFeature.EFFECT
     _attr_effect_list = LED_EFFECTS
+    _attr_icon = "mdi:button-pointer"
 
     def __init__(
         self,
