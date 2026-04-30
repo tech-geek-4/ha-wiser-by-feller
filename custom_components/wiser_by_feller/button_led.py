@@ -240,6 +240,7 @@ class WiserButtonLedLightEntity(LightEntity):
     """Wiser button LED exposed as a Home Assistant light."""
 
     _attr_has_entity_name = False
+    _attr_entity_category = EntityCategory.CONFIG
     _attr_supported_color_modes = {ColorMode.RGB}
     _attr_color_mode = ColorMode.RGB
     _attr_supported_features = LightEntityFeature.EFFECT
