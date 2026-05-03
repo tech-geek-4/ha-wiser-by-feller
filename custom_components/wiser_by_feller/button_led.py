@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from aiowiserbyfeller import Device, Load
+from aiowiserbyfeller.enum import BlinkPattern
 from homeassistant.components.light import ATTR_EFFECT, ATTR_RGB_COLOR, LightEntity, LightEntityFeature
 from homeassistant.components.light.const import ColorMode
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -14,7 +15,7 @@ from .const import DOMAIN, MANUFACTURER
 from .coordinator import WiserCoordinator
 
 
-LED_EFFECTS = ["permanent", "ramp", "ramp_up", "ramp_down", "slow", "fast"]
+LED_EFFECTS = [pattern.value for pattern in BlinkPattern]
 
 
 def rgb_tuple_to_hex(rgb: tuple[int, int, int]) -> str:
@@ -209,7 +210,7 @@ def create_button_led_entities(coordinator: WiserCoordinator) -> list[WiserButto
             if load_channel is not None:
                 load = coordinator.loads_by_device_channel.get((device_id, load_channel))
 
-            if load is None:
+            if load is None and led_definition["sub_type"] != "scene":
                 load = fallback_load
 
             if load is not None:
@@ -218,7 +219,13 @@ def create_button_led_entities(coordinator: WiserCoordinator) -> list[WiserButto
                     if load.room is not None and coordinator.rooms
                     else None
                 )
-
+            elif led_definition["sub_type"] == "scene" and fallback_load is not None:
+                room = (
+                    coordinator.rooms.get(fallback_load.room)
+                    if fallback_load.room is not None and coordinator.rooms
+                    else None
+                )
+                
             entities.append(
                 WiserButtonLedLightEntity(
                     coordinator=coordinator,
@@ -276,7 +283,7 @@ class WiserButtonLedLightEntity(LightEntity):
         self._attr_unique_id = f"{device_id}_led_channel_{channel}_index_{led_index}"
         self._attr_is_on = False
         self._attr_rgb_color = (0, 255, 0)
-        self._attr_effect = "permanent"
+        self._attr_effect = BlinkPattern.PERMANENT.value
 
         if self._sub_type == "scene":
             base_name = "LED"
@@ -312,7 +319,6 @@ class WiserButtonLedLightEntity(LightEntity):
             else self._device.a["fw_version"]
         )
 
-        #if self._load is not None and self._sub_type != "scene":
         if self._load is not None:
             return DeviceInfo(
                 identifiers={(DOMAIN, f"{self._load.device}_{self._load.channel}")},
@@ -372,16 +378,19 @@ class WiserButtonLedLightEntity(LightEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn LED override on."""
         rgb_color = tuple(kwargs.get(ATTR_RGB_COLOR, self._attr_rgb_color))
-        effect = kwargs.get(ATTR_EFFECT, self._attr_effect or "permanent")
+        effect = kwargs.get(ATTR_EFFECT, self._attr_effect or BlinkPattern.PERMANENT.value)
 
-        if effect not in LED_EFFECTS:
-            effect = "permanent"
+        try:
+            pattern = BlinkPattern(effect)
+        except ValueError:
+            pattern = BlinkPattern.PERMANENT
+            effect = pattern.value
 
         await self.coordinator._api.async_set_button_led(
             button_id=self._button_id,
             led_index=self._led_index,
             on=True,
-            pattern=effect,
+            pattern=pattern,
             color=rgb_tuple_to_hex(rgb_color),
         )
 
@@ -392,13 +401,18 @@ class WiserButtonLedLightEntity(LightEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn LED override off."""
+        try:
+            pattern = BlinkPattern(self._attr_effect or BlinkPattern.PERMANENT.value)
+        except ValueError:
+            pattern = BlinkPattern.PERMANENT
+
         await self.coordinator._api.async_set_button_led(
             button_id=self._button_id,
             led_index=self._led_index,
             on=False,
-            pattern=self._attr_effect or "permanent",
+            pattern=pattern,
             color=rgb_tuple_to_hex(self._attr_rgb_color),
         )
-
+        
         self._attr_is_on = False
         self.async_write_ha_state()
