@@ -1,4 +1,4 @@
-# Wiser by Feller for Home Assistantt
+# Wiser by Feller for Home Assistant
 
 [![Testing & Linting](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml/badge.svg)](https://github.com/Syonix/ha-wiser-by-feller/actions/workflows/test.yml)
 ![HA Installs](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Installs%20(opt-in%20analytics)&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.wiser_by_feller.total)
